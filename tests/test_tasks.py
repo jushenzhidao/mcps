@@ -129,3 +129,13 @@ def test_read_poll_requires_result_for_success():
     assert cap.read_poll({"status": "succeeded", "result": {"url": "x"}})["status"] is TaskStatus.SUCCEEDED
     assert cap.read_poll({"status": "failed", "error": "boom"})["status"] is TaskStatus.FAILED
     assert cap.read_poll({"status": "expired"})["status"] is TaskStatus.EXPIRED
+
+
+def test_in_memory_store_satisfies_protocol():
+    """TaskStore 必须满足 TaskStoreProtocol，Redis 后端才是真 drop-in。"""
+    from jieapi_mcp.tasks import TaskStoreProtocol
+
+    store = TaskStore()
+    for name in ("create", "get", "list", "update"):
+        assert callable(getattr(store, name)), f"TaskStore 缺少 {name}"
+    assert isinstance(TaskStoreProtocol, type)

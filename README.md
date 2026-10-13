@@ -119,6 +119,36 @@ MCP Server（Python + mcp 2.x，单进程）
 
 **框架层无需改动。**
 
+### 并发与扩容（含"要不要换 Go"的结论）
+
+**先定性**：本服务的耗时几乎全在等上游（生图实测 9~60s），CPU 基本空闲。
+因此瓶颈是**上游延迟与限流**，不是语言或进程模型 —— 换 Go 并不会让它更快。
+
+**单进程能扛多少**：SDK 对同步工具的实现是 `await anyio.to_thread.run_sync(...)`，
+并发受 anyio 线程池限制（默认 40，可用 `MCP_MAX_CONCURRENCY` 调大）。即单进程可同时挂着几十个上游请求。
+
+**何时才需要多 worker / 多副本**：要 HA（崩了不中断）或确有高并发时。此时有**两个不同性质**的坑，要一起解决：
+
+| 坑 | 状态归属 | 解法 |
+|---|---|---|
+| MCP 会话（`Session not found`） | **SDK 进程内**对象（含 SSE 流/队列），**无法**序列化进 Redis | `MCP_STATELESS=1`（推荐）或 nginx 粘性会话 |
+| `TaskStore` 查不到任务 | **我们自己**的内存字典 | 换成实现 `TaskStoreProtocol` 的 Redis/MySQL 后端（drop-in，框架与插件不用改） |
+
+> ⚠️ 所以"用 Redis 解决"只对**第二个坑**成立；第一个坑不是我们的数据结构，Redis 帮不上。
+
+实测（本机 gunicorn `-w 2`，**每次新建连接**）：
+
+| 配置 | 结果 |
+|---|---|
+| 有会话（stateful） | 成功 2 / 失败 10，报 `Session not found` |
+| `MCP_STATELESS=1` | 成功 12 / 失败 0 |
+
+> 🔴 注意：**单客户端复用 keep-alive 连接时会天然粘在同一个 worker**，多 worker 也"看着正常"——这是假绿灯。
+> 真实触发场景是**多客户端并发、连接重建、或前置 LB 轮询**。复现脚本：`scripts/worker_affinity_probe.py`。
+
+**结论**：默认单进程（`workers=1`）；确要扩容，先上 `MCP_STATELESS=1` + 外置任务表。
+只有出现**进程内 CPU 密集**需求（大规模图像解码/转码等）时，换 Go 才值得。
+
 ---
 
 ## 5. 与 PRD 的现实校准（实测差异）

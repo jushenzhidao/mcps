@@ -12,6 +12,7 @@ from .transport import Transport
 
 if TYPE_CHECKING:  # pragma: no cover
     from .capabilities.base import BaseCapability
+    from .tasks import TaskStoreProtocol
 
 
 @dataclass
@@ -20,6 +21,11 @@ class AppContext:
     transport: Transport
     catalog: ModelCatalog
     guard: CapabilityGuard
-    tasks: TaskStore
+    #: 任务表。默认进程内实现；多 worker/多副本场景可替换为实现 TaskStoreProtocol 的
+    #: Redis / MySQL 后端（drop-in）。
+    tasks: "TaskStore | TaskStoreProtocol"
     #: 能力名 → 能力实例；由 :func:`jieapi_mcp.server.build_server` 填充
     capabilities: dict[str, "BaseCapability"] = field(default_factory=dict)
+
+
+__all__ = ["AppContext", "TaskStore", "TaskStoreProtocol"]

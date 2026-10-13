@@ -10,6 +10,8 @@
 
 from __future__ import annotations
 
+import os
+
 from .config import ConfigManager
 from .http_app import create_http_app
 from .server import build_server, _make_context
@@ -19,7 +21,8 @@ def build_app():
     """构建带鉴权的 ASGI 应用（导入即失败 = 配置有问题，快速暴露）。"""
     ctx = _make_context(ConfigManager.bootstrap())
     server = build_server(ctx)
-    return create_http_app(server)
+    # 端口用于放行「Host: 端口」形式的请求（DNS rebinding 防护按 Host 逐字比对）
+    return create_http_app(server, port=int(os.environ.get("MCP_PORT", "8000")))
 
 
 app = build_app()

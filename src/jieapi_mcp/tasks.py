@@ -21,7 +21,7 @@ import time
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any
+from typing import Any, Protocol
 
 
 class TaskStatus(str, Enum):
@@ -163,3 +163,37 @@ class TaskStore:
             ordered = sorted(self._tasks.values(), key=lambda t: t.created_at)
             for task in ordered[: len(self._tasks) - self._max]:
                 self._tasks.pop(task.id, None)
+
+
+class TaskStoreProtocol(Protocol):
+    """任务表接口 —— **外置存储（Redis / MySQL）的扩展点**。
+
+    为什么需要它：多 worker / 多副本部署时，进程内字典会导致 ``get_task`` 查不到任务。
+    实现本协议的 Redis/MySQL 后端后，替换 :class:`AppContext` 里的 ``tasks`` 即可
+    （drop-in，框架与能力插件都不用改）。
+
+    ⚠️ 分布式实现下建议对 ``update`` 加锁（如 Redis SETNX）以避免多 worker 并发轮询同一任务、
+    对上游造成重复请求。
+    """
+
+    def create(
+        self,
+        *,
+        capability: str,
+        model: str,
+        upstream_id: str | None = None,
+        status: TaskStatus = TaskStatus.QUEUED,
+        meta: dict[str, Any] | None = None,
+    ) -> Task: ...
+
+    def get(self, task_id: str) -> Task | None: ...
+
+    def list(
+        self,
+        *,
+        status: TaskStatus | None = None,
+        capability: str | None = None,
+        limit: int = 20,
+    ) -> list[Task]: ...
+
+    def update(self, task_id: str, **fields: Any) -> Task: ...

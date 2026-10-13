@@ -97,15 +97,25 @@ def create_http_app(
     auth_token: str | None = None,
     allowed_hosts: list[str] | None = None,
     port: int | None = None,
+    stateless: bool | None = None,
 ) -> object:
-    """构造带鉴权与健康检查的 ASGI 应用。"""
+    """构造带鉴权与健康检查的 ASGI 应用。
+
+    ``stateless``（或环境变量 ``MCP_STATELESS=1``）
+        开启后每个请求独立、不建立会话 ⇒ **可多 worker / 多副本横向扩容**。
+        代价：会话内的服务端推送能力（sampling / elicitation / 进度通知）不可用。
+        本网关只做「请求-响应 + 显式轮询工具调用」，因此通常可以接受。
+    """
     token = auth_token if auth_token is not None else os.environ.get("MCP_AUTH_TOKEN", "")
+    if stateless is None:
+        stateless = os.environ.get("MCP_STATELESS", "0") == "1"
     transport_security = TransportSecuritySettings(
         enable_dns_rebinding_protection=True,
         allowed_hosts=allowed_hosts or resolve_allowed_hosts(port=port),
     )
     app: Starlette = server.streamable_http_app(
         streamable_http_path=path,
+        stateless_http=bool(stateless),
         transport_security=transport_security,
     )
     app.router.routes.append(Route(HEALTH_PATH, _health, methods=["GET"]))

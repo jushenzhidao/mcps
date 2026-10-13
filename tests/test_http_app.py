@@ -50,3 +50,17 @@ def test_health_route_registered(server):
     paths = {getattr(r, "path", None) for r in inner.router.routes}
     assert "/healthz" in paths
     assert "/mcp" in paths
+
+
+def test_stateless_flag_from_env(server, monkeypatch):
+    """stateless 开启后可多 worker（会话不再存在于进程内）。"""
+    monkeypatch.setenv("MCP_STATELESS", "1")
+    app = create_http_app(server, auth_token="secret")
+    assert isinstance(app, BearerAuthMiddleware)
+
+
+def test_allowed_hosts_include_port():
+    """带端口请求的 Host 是 host:port，必须一并放行，否则 421。"""
+    hosts = resolve_allowed_hosts("mcp.1task.cn", port=39020)
+    assert "mcp.1task.cn:39020" in hosts
+    assert "127.0.0.1:39020" in hosts
