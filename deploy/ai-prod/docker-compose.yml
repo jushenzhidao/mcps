@@ -1,0 +1,31 @@
+# jieapi MCP 网关服务 · ai-prod 部署（mcp.1task.cn）
+#
+# 部署形态：**拉 CI 制品**（GHCR 镜像），服务器不构建。
+#   镜像由 .github/workflows/docker-publish.yml 在 push main / 打 tag 时构建推送。
+#   端口仅绑回环 127.0.0.1:39020，对外由 nginx 反代 + TLS。
+#
+# ⚠️ 单进程（勿加 workers）：MCP 会话与 TaskStore 均在进程内。
+#    要扩容先设 MCP_STATELESS=1 并把任务表换成外部实现（见 README）。
+
+services:
+  jieapi-mcp:
+    # 🔴 钉版本，不要用 latest：便于回溯与回滚。在 .env 里设 MCP_IMAGE。
+    image: ${MCP_IMAGE:?MCP_IMAGE 必须设置，如 ghcr.io/jushenzhidao/mcps:sha-xxxxxxx}
+    container_name: jieapi-mcp
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:39020:8000"
+    env_file:
+      - .env
+    environment:
+      JIEAPI_BASE_URL: ${JIEAPI_BASE_URL:-https://jieapi.com}
+      MCP_ALLOWED_HOSTS: ${MCP_ALLOWED_HOSTS:-mcp.1task.cn}
+      MCP_MAX_CONCURRENCY: ${MCP_MAX_CONCURRENCY:-40}
+      GATEWAY_TIMEOUT: ${GATEWAY_TIMEOUT:-120}
+      IMAGE_MAX_FILE_MB: ${IMAGE_MAX_FILE_MB:-10}
+      TZ: Asia/Shanghai
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
