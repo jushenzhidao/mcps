@@ -23,7 +23,7 @@
      "type": "http",
      "url": "https://mcp.1task.cn/mcp",
      "headers": { "Authorization": "Bearer <MCP_AUTH_TOKEN>" },
-     "description": "jieapi(new-api) 网关 MCP 服务。工具：generate_image（文生图/图生图/多图合成，一次调用即产生上游网关费用，URL 结果有有效期）、list_models（可按 capability 过滤如 image）、reload_config（热重载能力映射表），以及任务型通用工具 get_task/list_tasks/cancel_task。"
+     "description": "jieapi(new-api) 网关 MCP 服务。工具：generate_image（文生图/图生图/多图合成，同步；一次调用即产生上游网关费用，URL 结果有有效期）、create_video（视频生成，异步：提交返回 task_id，再用 get_task 轮询；上游无取消端点）、list_models（可按 capability 过滤如 image/video）、reload_config（热重载能力映射表），以及任务型通用工具 get_task/list_tasks/cancel_task。"
    }
 
 2) 校验 JSON 语法合法，并确认原有条目（cowart/rea/logfire/logfire-images 等）未被改动。
@@ -69,9 +69,12 @@
    - 首选：**新开一个会话**（新任务），让 WorkBuddy 重新加载工具清单；
    - 或用：输入框左下角 `+` → 连接器 → 勾选 `jieapi`（会话级启用）。
 2. 工具会以 `mcp__jieapi__*` 形式出现：
-   `generate_image` / `list_models` / `reload_config` / `get_task` / `list_tasks` / `cancel_task`
+   `generate_image` / `create_video` / `list_models` / `reload_config` / `get_task` / `list_tasks` / `cancel_task`
 3. **先验证再花钱**：让它调 `list_models`（只读、免费）。返回形如「具备 image 能力且网关在售的模型（25 个）」即打通。
-4. 之后再用 `generate_image`。**注意：一次调用即产生上游网关费用**（约 0.2 元/张起）。
+4. 之后再用 `generate_image`（同步）或 `create_video`（异步）。
+   **注意：一次调用即产生上游网关费用**（生图约 0.2 元/张起）；视频提交即计费。
+5. 视频要走两步：`create_video` 拿 `task_id` → 隔一会儿用 `get_task` 查。
+   实测 480p/5s 约 2.5 分钟出片，**不要**用长 `wait_seconds` 干等。
 
 ---
 

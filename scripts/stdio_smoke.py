@@ -34,7 +34,7 @@ async def main() -> int:
             tools = await session.list_tools()
             names = sorted(t.name for t in tools.tools)
             print("工具清单：", names)
-            assert {"generate_image", "list_models", "reload_config"} <= set(names), names
+            assert {"generate_image", "create_video", "list_models", "reload_config"} <= set(names), names
 
             # 只读工具：不触发计费
             res = await session.call_tool("list_models", {"capability": "image"})

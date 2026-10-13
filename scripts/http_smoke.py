@@ -70,7 +70,15 @@ def main() -> int:
         payload = parse_sse(r.text)
         names = sorted(t["name"] for t in payload["result"]["tools"])
         print(f"[4] tools/list OK：{names}")
-        required = {"generate_image", "list_models", "reload_config", "get_task", "list_tasks", "cancel_task"}
+        required = {
+            "generate_image",
+            "create_video",
+            "list_models",
+            "reload_config",
+            "get_task",
+            "list_tasks",
+            "cancel_task",
+        }
         assert required <= set(names), f"缺少工具：{required - set(names)}"
 
         # 5. 只读调用

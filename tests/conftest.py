@@ -17,6 +17,7 @@ CAPS = {
     "flux-3-image": ["image", "image_to_image"],
     "text-model": ["chat"],
     "video-model": ["video"],
+    "minimax-h3-480p": ["video"],
     "sample-model": ["sample_task"],
 }
 

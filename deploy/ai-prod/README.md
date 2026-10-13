@@ -60,7 +60,9 @@ MCP_URL=https://mcp.1task.cn/mcp MCP_AUTH_TOKEN=<token> \
   python scripts/http_smoke.py
 ```
 
-预期：401（错令牌）→ initialize → tools/list 6 个工具 → tools/call `list_models` 含 `flux-3-image`。
+预期：401（错令牌）→ initialize → tools/list **7** 个工具（含 `create_video`）→ tools/call `list_models` 含 `flux-3-image`。
+
+> ⚠️ 冒烟脚本会把 `create_video` 列为必需工具 ⇒ **先升级部署再跑**，否则老版本会报缺少工具。
 
 ## 客户端接入
 

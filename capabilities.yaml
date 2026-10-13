@@ -12,8 +12,10 @@
 # 能力标签约定（当期与预留）：
 #   image          文生图（prompt → 图）
 #   image_to_image 图生图 / 图像编辑（需传 image 参考图）—— 预留子能力，按模型实测细化
+#   video          视频生成（任务型异步：提交返回 task_id，用 get_task 轮询）—— 见文件末尾
 #
-# ⚠️ 事实来源：本表基于 2026-10-13 对网关 https://jieapi.com 的 /v1/models 实测 + 出图实测。
+# ⚠️ 事实来源：本表基于 2026-10-13 对网关 https://jieapi.com 的 /v1/models 实测 + 出图实测；
+#    video 段基于 2026-10-14 的端点探测 + h3 提交实测。
 #    网关模型清单会变；用 list_models 工具随时核对，改完本文件用 reload_config 热重载。
 
 models:
@@ -91,3 +93,29 @@ models:
   jimeng-outpaint:
     capabilities: [image_to_image]
     note: "扩图（outpaint），需传参考图。"
+
+  # =====================================================================
+  # 视频生成（能力标签 video，任务型异步）
+  # =====================================================================
+  # 上游是**聚合端点** /v3/contents/generations/tasks（家族无关，一条路径通吃）：
+  #   POST 提交 → {"id":"task_.."}；GET /{task_id} → {status, content.video_url, ...}
+  # Apifox 里各家族文档的前缀（/doubao/api/v3/..、/videos/api/v3/..）经实测**被忽略**，
+  # 三条前缀对 GET/POST 返回逐字一致的响应，故不按家族分叉路径。
+  # 模型归属已零成本探测（发一个上游不服务的模型 ⇒ 报 not served by this plugin）。
+  minimax-h3-480p:
+    capabilities: [video]
+    note: "2026-10-14 h3 实测：POST 受理并返回 task_…，轮询 status=queued。480p，duration 支持 5/10。"
+  minimax-h3-720p:
+    capabilities: [video]
+    note: "720p，duration 支持 5/8。"
+  doubao-seedance-2-0-260128:
+    capabilities: [video]
+    note: "seedance-2.0，支持多模态参考（图/视频/音频）。文档路径带 /doubao 前缀，实测走同一聚合端点。"
+  wan-2.5-720p:
+    capabilities: [video]
+    note: "阿里百炼 wan。原生文档指向 tasks.jieapi.com，但经本聚合端点的模型校验可通过（未实测出片）。"
+  # qwen/video：插件侧模型校验可通过，但不在网关 /v1/models 售卖方清单里，故未纳入。
+  # 需要用的话把下面一行取消注释即可（capabilities.yaml 是唯一事实来源，改完 reload_config）。
+  # qwen/video:
+  #   capabilities: [video]
+  #   note: "插件可服务但网关未列出，未验证可售。"
