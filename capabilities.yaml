@@ -1,0 +1,93 @@
+# 能力映射表（模型名 → 能力集合）
+#
+# 用途：FR-F5 的统一模型校验。工具调用前查此表确认模型具备该能力；
+#       未命中则报错并列出该能力下全部可用模型。
+#
+# 格式：
+#   models:
+#     <模型ID>:
+#       capabilities: [<能力标签>, ...]
+#       note: <可选说明>
+#
+# 能力标签约定（当期与预留）：
+#   image          文生图（prompt → 图）
+#   image_to_image 图生图 / 图像编辑（需传 image 参考图）—— 预留子能力，按模型实测细化
+#
+# ⚠️ 事实来源：本表基于 2026-10-13 对网关 https://jieapi.com 的 /v1/models 实测 + 出图实测。
+#    网关模型清单会变；用 list_models 工具随时核对，改完本文件用 reload_config 热重载。
+
+models:
+  # ---- 经 traffic 验证可出图 ----
+  flux-3-image:
+    capabilities: [image, image_to_image]
+    note: "2026-10-13 实测：HTTP 200，约 43s 出图；返回 data[].url（COS 签名链接）。"
+
+  # ---- 豆包 Seedream 系列（t2i / 多图合成）----
+  doubao-seedream-5-0-260128:
+    capabilities: [image, image_to_image]
+    note: "image-adapter 档案实测：16 档尺寸，约 0.22 元/张，9~20s。"
+  doubao-seedream-4-5-251128:
+    capabilities: [image, image_to_image]
+  doubao-seedream-4-0-250828:
+    capabilities: [image, image_to_image]
+  doubao-seedream-3-0-t2i-250415:
+    capabilities: [image]
+  doubao-seededit-3-0-i2i-250628:
+    capabilities: [image_to_image]
+    note: "i2i 专用（图像编辑），需传参考图。"
+
+  # ---- Flux 系列 ----
+  flux-3:
+    capabilities: [image]
+  flux-precise-edit:
+    capabilities: [image_to_image]
+    note: "编辑型，需传参考图。"
+
+  # ---- Gemini / Nano Banana 系列 ----
+  gemini-2.5-flash-image:
+    capabilities: [image, image_to_image]
+  gemini-2.5-flash-image-preview:
+    capabilities: [image, image_to_image]
+  gemini-3-pro-image-preview:
+    capabilities: [image, image_to_image]
+  gemini-3-pro-image-preview-c:
+    capabilities: [image, image_to_image]
+  gemini-3.1-flash-image-preview:
+    capabilities: [image, image_to_image]
+  gemini-3.1-flash-image-preview-c:
+    capabilities: [image, image_to_image]
+  gemini-nano-banana-2.1-c:
+    capabilities: [image, image_to_image]
+  nano-banana-2:
+    capabilities: [image, image_to_image]
+  nano-banana-2.1:
+    capabilities: [image, image_to_image]
+  nano-banana-pro:
+    capabilities: [image, image_to_image]
+
+  # ---- 其他厂商生图模型 ----
+  dalle-3:
+    capabilities: [image]
+  hy-image-v3.5-preview:
+    capabilities: [image, image_to_image]
+  qwen-image-3.0:
+    capabilities: [image, image_to_image]
+  qwen-image-3.0-c:
+    capabilities: [image, image_to_image]
+  qwen-image-3.0-pro:
+    capabilities: [image, image_to_image]
+  qwen-image-3.0-pro-c:
+    capabilities: [image, image_to_image]
+  mj-v8.2:
+    capabilities: [image]
+  jimeng-t2i:
+    capabilities: [image]
+  jimeng-i2i:
+    capabilities: [image_to_image]
+  jimeng-hd:
+    capabilities: [image]
+  jimeng-pro-hd:
+    capabilities: [image]
+  jimeng-outpaint:
+    capabilities: [image_to_image]
+    note: "扩图（outpaint），需传参考图。"

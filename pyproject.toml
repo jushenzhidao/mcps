@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jieapi-mcp"
+version = "0.1.0"
+description = "把 jieapi（new-api）网关能力封装为 MCP 工具的网关服务"
+requires-python = ">=3.10"
+dependencies = [
+    "mcp>=2.3",
+    "httpx>=0.27",
+    "PyYAML>=6.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+# 可选：要跑 gunicorn 时安装
+serve = ["gunicorn>=21", "uvicorn-worker>=0.2"]
+
+[project.scripts]
+jieapi-mcp = "jieapi_mcp.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+jieapi_mcp = ["py.typed"]

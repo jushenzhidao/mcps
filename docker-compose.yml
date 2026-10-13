@@ -1,0 +1,27 @@
+# 部署示例：docker compose up -d
+#
+# ⚠️ 复制为 .env.deploy 并填真实值；不要提交。
+# ⚠️ 端口只绑回环，由 nginx 反代 + 配置 TLS（见 README「服务端部署」）。
+
+services:
+  jieapi-mcp:
+    build: .
+    image: jieapi-mcp:latest
+    container_name: jieapi-mcp
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8801:8000"     # 仅本机可访问；对外走 nginx
+    environment:
+      JIEAPI_KEY: ${JIEAPI_KEY:?JIEAPI_KEY 必须设置}
+      JIEAPI_BASE_URL: ${JIEAPI_BASE_URL:-https://jieapi.com}
+      # HTTP 服务端鉴权：客户端需带 Authorization: Bearer <该值>
+      MCP_AUTH_TOKEN: ${MCP_AUTH_TOKEN:?MCP_AUTH_TOKEN 必须设置（否则拒绝启动）}
+      # DNS rebinding 防护放行域名（逗号分隔；localhost/127.0.0.1 自动附加）
+      MCP_ALLOWED_HOSTS: ${MCP_ALLOWED_HOSTS:-localhost,127.0.0.1}
+      GATEWAY_TIMEOUT: ${GATEWAY_TIMEOUT:-120}
+      IMAGE_MAX_FILE_MB: ${IMAGE_MAX_FILE_MB:-10}
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

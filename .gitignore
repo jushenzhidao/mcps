@@ -1,0 +1,26 @@
+# 虚拟环境与构建产物
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+build/
+dist/
+
+# 测试与缓存
+.pytest_cache/
+
+# 密钥与本地配置（务必不入库）
+.env
+.env.deploy
+.env.local
+*.env
+
+# 工具/IDE/系统
+.workbuddy/
+.idea/
+.vscode/
+.DS_Store
+
+# 运行产物
+reports/
+outputs/
